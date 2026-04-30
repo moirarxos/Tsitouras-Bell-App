@@ -127,7 +127,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn-viber{background:#7360f2;color:#fff}
 .btn-mail{background:#2a7d4f;color:#fff}
 .btn-office{background:#8B6914;color:#fff}
-.btn-print{background:#1a2a4a;color:#fff}
 .btn-rem{background:#d4860a;color:#fff}
 .status-pill{display:inline-block;border-radius:14px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:4px}
 .st-prosfora{background:#fff3cd;color:#8B6914}.st-ongoing{background:#e8f0ff;color:#1B3A6B}.st-done{background:#e7f5ec;color:#2a7d4f}.st-cancel{background:#fdecea;color:#c0392b}
@@ -435,7 +434,7 @@ svg path,svg circle,svg polyline,svg rect,svg line{stroke:#8aafd4;fill:none;stro
 <div class="sec">Στοιχεία εργασίας</div>
 <div class="row2">
   <div class="field" style="margin:0"><label>Κωδικός εργασίας</label><input type="text" id="work-id" readonly></div>
-  <div class="field" style="margin:0"><label>Κατάσταση</label><select id="work-status" onchange="calc()"><option>Αναμονή</option><option>Εγκρίθηκε</option><option>Ακυρώθηκε</option><option>Παραγγελία</option><option>Ολοκλήρωση</option></select></div>
+  <div class="field" style="margin:0"><label>Κατάσταση</label><select id="work-status" onchange="calc()"><option>Προσφορά</option><option>Εγκρίθηκε</option><option>Σε εξέλιξη</option><option>Ολοκληρώθηκε</option><option>Ακυρώθηκε</option></select></div>
 </div>
 <div class="field"><label>Σημειώσεις για γραφείο</label><textarea id="office-notes" rows="3" placeholder="π.χ. ζήτησε απόδειξη, χρειάζεται γερανό, πληρώθηκε μετρητά..."></textarea></div>
 <div class="sec">Υπενθύμιση πελάτη</div>
@@ -452,7 +451,6 @@ svg path,svg circle,svg polyline,svg rect,svg line{stroke:#8aafd4;fill:none;stro
 </div>
 <div class="field"><label>Email πελάτη</label><input type="email" id="cust-email" placeholder="info@ecclesia..."></div>
 <div class="field"><label>Email γραφείου / backoffice</label><input type="email" id="office-email" value="info@bells.gr" placeholder="office@..."></div>
-<button class="btn btn-print" onclick="printOffer()">Εκτύπωση Δελτίο Προσφοράς / PDF</button>
 <button class="btn btn-office" onclick="sendOffice()">Αποστολή στο Γραφείο</button>
 <button class="btn btn-gold" onclick="saveToHistory()">Αποθήκευση στο αρχείο</button>
 <button class="btn btn-viber" onclick="shareViber()">Αποστολή Viber</button>
@@ -464,13 +462,7 @@ svg path,svg circle,svg polyline,svg rect,svg line{stroke:#8aafd4;fill:none;stro
 <!-- ══════ ΑΡΧΕΙΟ ══════ -->
 <div class="panel" id="tab-history">
 <div class="sec">Αρχείο προσφορών</div>
-<div class="info-box">Αποθηκεύεται στο κινητό σας και οργανώνεται σε Αναμονή, Εγκρίθηκε, Παραγγελία, Ολοκλήρωση και Ακυρώθηκε.</div>
-<div class="card">
-  <button class="btn btn-blue" onclick="exportHistorySummaryCSV()">Εξαγωγή Excel - Σύνοψη</button>
-  <button class="btn btn-gold" onclick="exportHistoryDetailedCSV()">Εξαγωγή Excel - Αναλυτικά όλα τα στοιχεία</button>
-  <button class="btn btn-rst" onclick="exportHistoryJSON()">Backup JSON για μελλοντικό ERP</button>
-  <div class="note">Τα CSV ανοίγουν στο Excel. Το JSON κρατάει όλα τα δεδομένα πλήρως για ERP.</div>
-</div>
+<div class="info-box">Αποθηκεύεται στο κινητό σας και οργανώνεται σε Προσφορές, Ongoing και Ολοκληρωμένα. Οι υπενθυμίσεις εμφανίζονται στη συσκευή που τις καταχώρησε.</div>
 <div id="hist-list"><div class="empty-hist">Δεν υπάρχουν αποθηκευμένες προσφορές.<br>Συμπληρώστε και πατήστε "Αποθήκευση".</div></div>
 </div>
 
@@ -770,7 +762,7 @@ function buildMsg(type){
   const now=new Date().toLocaleDateString('el-GR');
   const now2=new Date().toLocaleString('el-GR');
   const workId=ensureWorkId();
-  const workStatus=document.getElementById('work-status')?document.getElementById('work-status').value:'Αναμονή';
+  const workStatus=document.getElementById('work-status')?document.getElementById('work-status').value:'Προσφορά';
   const modeLabel=quoteMode==='service'?'Προσφορά σέρβις':(quoteMode==='both'?'Προσφορά εγκατάστασης & σέρβις':(quoteMode==='empty'?'Σημείωση χωρίς χρέωση':'Προσφορά εγκατάστασης καμπανών'));
   const officeNotes=document.getElementById('office-notes')?document.getElementById('office-notes').value.trim():'';
   const remindAt=document.getElementById('remind-at')?document.getElementById('remind-at').value:'';
@@ -906,41 +898,17 @@ function sendServiceMail(){
   const body=encodeURIComponent(buildMsg('servis'));
   window.location.href=`mailto:${email}?subject=${sub}&body=${body}`;
 }
-function printDocHtml(title,msg){
-  const e=escapeHtml;
-  const lines=(msg||'').split('\n');
-  const fv=(label)=>{const l=lines.find(x=>x.indexOf(label)>=0);return l?l.split(label)[1].trim():'';};
-  const workId=fv('Κωδικος εργασιας:')||'';
-  const church=fv('Ι.Ν.:')||'';
-  const tech=fv('Τεχνικος:')||'';
-  const date=fv('Ημερ/νια:')||new Date().toLocaleDateString('el-GR');
-  const status=fv('Κατασταση:')||'';
-  const final=fv('ΤΕΛΙΚΗ ΤΙΜΗ:')||fv('ΣΥΝΟΛΟ ΜΕ ΦΠΑ:')||'0 €';
-  const bal=fv('Υπολοιπο εργασιας:')||'0 €';
-  return `<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#17233d;margin:0;background:#fff;font-size:12px;line-height:1.45}.head{display:flex;justify-content:space-between;gap:20px;border-bottom:4px solid #B8960C;padding-bottom:12px;margin-bottom:15px}.brand h1{margin:0;color:#1B3A6B;font-size:25px}.brand .sub{font-weight:bold;color:#B8960C}.box{text-align:right;border:1px solid #d8e0f0;border-radius:10px;padding:10px 12px;min-width:220px}.box h2{font-size:17px;margin:0 0 8px;color:#1B3A6B}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}.field{border:1px solid #d8e0f0;border-radius:8px;padding:8px 10px}.lab{font-size:10px;color:#6080a8;text-transform:uppercase;font-weight:bold}.val{font-weight:bold}.total{background:#1B3A6B;color:#fff;border-radius:12px;padding:14px 16px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}.total .v{font-size:25px;font-weight:bold}.bal{color:#B8960C;font-weight:bold;margin-top:5px}.sec{font-size:13px;font-weight:bold;color:#1B3A6B;border-bottom:1px solid #d8e0f0;padding-bottom:5px;margin:15px 0 8px}.details{white-space:pre-wrap;border:1px solid #d8e0f0;background:#f7f9fd;border-radius:10px;padding:12px;font-size:11px}.terms{margin-top:15px;border-top:1px solid #d8e0f0;padding-top:10px;color:#465f88;font-size:11px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:28px}.sig{border-top:1px solid #9fb0c8;padding-top:6px;text-align:center;color:#6080a8}.noprint button{padding:12px 18px;border:0;border-radius:9px;background:#1B3A6B;color:white;font-weight:bold}@media print{.noprint{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="head"><div class="brand"><h1>TSITOURAS BELLS</h1><div class="sub">ΑΦΟΙ ΤΣΙΤΟΥΡΑ Ο.Ε. - bells.gr</div><div>Τηλ. 210-5550 700 - Email: info@bells.gr</div></div><div class="box"><h2>${e(title)}</h2><div><b>${e(workId)}</b></div><div>${e(date)}</div><div>${e(status)}</div></div></div><div class="grid"><div class="field"><div class="lab">Ναός / Πελάτης</div><div class="val">${e(church||'—')}</div></div><div class="field"><div class="lab">Τεχνικός</div><div class="val">${e(tech||'—')}</div></div></div><div class="total"><div><div>Τελικό σύνολο</div><div class="bal">Υπόλοιπο: ${e(bal)}</div></div><div class="v">${e(final)}</div></div><div class="sec">Αναλυτικό δελτίο</div><div class="details">${e(msg||'')}</div><div class="terms">Εγγύηση καμπανών 10 χρόνια - Εγγύηση συστήματος 2 χρόνια - Η προσφορά ισχύει σύμφωνα με τα συμφωνημένα στοιχεία της εργασίας.</div><div class="sign"><div class="sig">Υπογραφή πελάτη</div><div class="sig">ΑΦΟΙ ΤΣΙΤΟΥΡΑ Ο.Ε.</div></div><div class="noprint" style="margin-top:20px"><button onclick="window.print()">Εκτύπωση / Αποθήκευση PDF</button></div><script>setTimeout(function(){window.print();},450);<\/script></body></html>`;
-}
-function openPrintDoc(title,msg){
-  const w=window.open('','_blank');
-  if(!w){alert('Το κινητό μπλόκαρε το παράθυρο εκτύπωσης. Δοκιμάστε από browser ή ενεργοποιήστε pop-ups.');return;}
-  w.document.open();w.document.write(printDocHtml(title,msg));w.document.close();
-}
-function printOffer(){
-  calc();
-  const isSrvOnly=quoteMode==='service';
-  openPrintDoc(isSrvOnly?'ΔΕΛΤΙΟ ΣΕΡΒΙΣ':'ΔΕΛΤΙΟ ΠΡΟΣΦΟΡΑΣ', buildMsg(isSrvOnly?'servis':'prosfora'));
-}
-
 
 // ── Status / reminders ─────────────────────────────────
-function normalizeStatus(st){ st=(st||'Αναμονή').trim(); if(st==='Προσφορά') return 'Αναμονή'; if(st==='Σε εξέλιξη') return 'Παραγγελία'; if(st==='Ολοκληρώθηκε') return 'Ολοκλήρωση'; if(st==='Ongoing') return 'Παραγγελία'; return st; }
-function statusClass(st){ st=normalizeStatus(st); if(st==='Αναμονή') return 'st-prosfora'; if(st==='Εγκρίθηκε') return 'st-ongoing'; if(st==='Παραγγελία') return 'st-ongoing'; if(st==='Ολοκλήρωση') return 'st-done'; if(st==='Ακυρώθηκε') return 'st-cancel'; return 'st-prosfora'; }
-function isReminderDue(h){ if(!h.remindAt || normalizeStatus(h.status)!=='Αναμονή') return false; return new Date(h.remindAt).getTime() <= Date.now(); }
+function normalizeStatus(st){ if(st==='Εγκρίθηκε') return 'Σε εξέλιξη'; return st||'Προσφορά'; }
+function statusClass(st){ st=normalizeStatus(st); if(st==='Προσφορά') return 'st-prosfora'; if(st==='Σε εξέλιξη') return 'st-ongoing'; if(st==='Ολοκληρώθηκε') return 'st-done'; if(st==='Ακυρώθηκε') return 'st-cancel'; return 'st-prosfora'; }
+function isReminderDue(h){ if(!h.remindAt || normalizeStatus(h.status)!=='Προσφορά') return false; return new Date(h.remindAt).getTime() <= Date.now(); }
 function fmtReminder(v){ if(!v) return '—'; try{return new Date(v).toLocaleString('el-GR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return v;} }
 function updateHist(id, patch){ let hist=[]; try{hist=JSON.parse(localStorage.getItem('bells_hist')||'[]');}catch(e){} hist=hist.map(h=>h.id===id?Object.assign({},h,patch,{updatedAt:new Date().toISOString()}):h); localStorage.setItem('bells_hist',JSON.stringify(hist)); renderHistory(); }
 function histSetStatus(id, st){ updateHist(id,{status:normalizeStatus(st)}); }
 function histCall(id){ const h=getHist(id); if(!h) return; if(h.phone){ window.location.href='tel:'+h.phone; } else alert('Δεν έχει καταχωρηθεί τηλέφωνο πελάτη.'); }
 function enableReminders(){ if(!('Notification' in window)){ alert('Η συσκευή/browser δεν υποστηρίζει ειδοποιήσεις. Οι υπενθυμίσεις θα φαίνονται μέσα στο app.'); return; } Notification.requestPermission().then(p=>{ alert(p==='granted'?'✅ Οι υπενθυμίσεις ενεργοποιήθηκαν σε αυτή τη συσκευή.':'Οι ειδοποιήσεις δεν ενεργοποιήθηκαν. Θα φαίνονται μέσα στο app.'); }); }
-function checkDueReminders(){ let hist=[]; try{hist=JSON.parse(localStorage.getItem('bells_hist')||'[]');}catch(e){} const now=Date.now(); hist.forEach(h=>{ if(!h.remindAt || normalizeStatus(h.status)!=='Αναμονή') return; const key='reminded_'+h.id+'_'+h.remindAt; if(new Date(h.remindAt).getTime()<=now && !localStorage.getItem(key)){ localStorage.setItem(key,'1'); const txt='Υπενθύμιση: πάρτε τον πελάτη '+(h.church||'')+' για την προσφορά '+(h.workId||''); if('Notification' in window && Notification.permission==='granted') new Notification('TSITOURAS BELLS', {body:txt}); else alert(txt); } }); }
+function checkDueReminders(){ let hist=[]; try{hist=JSON.parse(localStorage.getItem('bells_hist')||'[]');}catch(e){} const now=Date.now(); hist.forEach(h=>{ if(!h.remindAt || normalizeStatus(h.status)!=='Προσφορά') return; const key='reminded_'+h.id+'_'+h.remindAt; if(new Date(h.remindAt).getTime()<=now && !localStorage.getItem(key)){ localStorage.setItem(key,'1'); const txt='Υπενθύμιση: πάρτε τον πελάτη '+(h.church||'')+' για την προσφορά '+(h.workId||''); if('Notification' in window && Notification.permission==='granted') new Notification('TSITOURAS BELLS', {body:txt}); else alert(txt); } }); }
 // ── History ───────────────────────────────────────────
 function saveToHistory(){
   const isSrvOnly=quoteMode==='service';
@@ -950,7 +918,7 @@ function saveToHistory(){
   const msg=buildMsg(isSrvOnly?'servis':'prosfora');
   const entry={
     id:Date.now(),date:new Date().toLocaleDateString('el-GR'),
-    workId:ensureWorkId(),status:normalizeStatus(document.getElementById('work-status')?document.getElementById('work-status').value:'Αναμονή'),
+    workId:ensureWorkId(),status:normalizeStatus(document.getElementById('work-status')?document.getElementById('work-status').value:'Προσφορά'),
     remindAt:document.getElementById('remind-at')?document.getElementById('remind-at').value:'',
     phone:document.getElementById('cust-phone')?document.getElementById('cust-phone').value.trim():'',
     nextAction:document.getElementById('next-action')?document.getElementById('next-action').value.trim():'',
@@ -958,8 +926,7 @@ function saveToHistory(){
     balance:document.getElementById('balance-amt')?document.getElementById('balance-amt').value:'0 €',
     church,final,gross,msg,
     email:(isSrvOnly?document.getElementById('srv-email').value:document.getElementById('cust-email').value),
-    kind:(isSrvOnly?'Σέρβις':'Προσφορά'),
-    fields:collectCurrentFields(isSrvOnly?'Σέρβις':'Προσφορά')
+    kind:(isSrvOnly?'Σέρβις':'Προσφορά')
   };
   let hist=[];
   try{hist=JSON.parse(localStorage.getItem('bells_hist')||'[]');}catch(e){}
@@ -980,11 +947,10 @@ function renderHistory(){
   if(!list) return;
   if(!hist.length){list.innerHTML='<div class="empty-hist">Δεν υπάρχουν αποθηκευμένες προσφορές.<br>Συμπληρώστε και πατήστε "Αποθήκευση".</div>';return;}
   const groups=[
-    ['Αναμονή / Υπενθυμίσεις', hist.filter(h=>h.status==='Αναμονή')],
-    ['Εγκρίθηκε', hist.filter(h=>h.status==='Εγκρίθηκε')],
-    ['Παραγγελία / Υπόλοιπα', hist.filter(h=>h.status==='Παραγγελία')],
-    ['Ολοκλήρωση', hist.filter(h=>h.status==='Ολοκλήρωση')],
-    ['Ακυρώθηκε', hist.filter(h=>h.status==='Ακυρώθηκε')]
+    ['Προσφορές / Υπενθυμίσεις', hist.filter(h=>h.status==='Προσφορά')],
+    ['Ongoing / Εγκρίθηκαν', hist.filter(h=>h.status==='Σε εξέλιξη')],
+    ['Ολοκληρωμένα', hist.filter(h=>h.status==='Ολοκληρώθηκε')],
+    ['Ακυρωμένα', hist.filter(h=>h.status==='Ακυρώθηκε')]
   ];
   function item(h){
     const due=isReminderDue(h);
@@ -1000,12 +966,10 @@ function renderHistory(){
         <button class="hi-btn hi-mail" onclick="histMail(${h.id})">Email</button>
         <button class="hi-btn hi-mail" onclick="histOffice(${h.id})">Γραφείο</button>
         <button class="hi-btn hi-mail" onclick="histCall(${h.id})">Κλήση</button>
-        <button class="hi-btn hi-mail" onclick="histPrint(${h.id})">PDF</button>
       </div>
       <div class="hi-acts">
-        <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Εγκρίθηκε')">Εγκρίθηκε</button>
-        <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Παραγγελία')">Παραγγελία</button>
-        <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Ολοκλήρωση')">Ολοκλήρωση</button>
+        <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Σε εξέλιξη')">Εγκρίθηκε → Ongoing</button>
+        <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Ολοκληρώθηκε')">Ολοκληρώθηκε</button>
         <button class="hi-btn hi-del" onclick="histDel(${h.id})">✕ Διαγραφή</button>
       </div>
       <details class="hist-details"><summary>Άνοιγμα λεπτομερειών εργασίας</summary><pre>${escapeHtml(h.msg||'Δεν υπάρχουν λεπτομέρειες.')}</pre></details>
@@ -1016,31 +980,6 @@ function renderHistory(){
 function getHist(id){
   try{return (JSON.parse(localStorage.getItem('bells_hist')||'[]')).find(h=>h.id===id);}catch(e){return null;}
 }
-function selText(id){ const el=document.getElementById(id); if(!el) return ''; return el.options ? (el.options[el.selectedIndex]?.text||'') : (el.value||''); }
-function valOf(id){ const el=document.getElementById(id); return el ? (el.value||'') : ''; }
-function txtOf(id){ const el=document.getElementById(id); return el ? (el.textContent||'') : ''; }
-function collectCurrentFields(kind){
-  const fields={};
-  fields.exportVersion='v18'; fields.kind=kind||quoteMode||''; fields.createdAt=new Date().toISOString(); fields.workId=ensureWorkId();
-  fields.status=normalizeStatus(document.getElementById('work-status')?document.getElementById('work-status').value:'Αναμονή');
-  fields.officeEmail=valOf('office-email')||'info@bells.gr'; fields.officeNotes=valOf('office-notes'); fields.customerPhone=valOf('cust-phone'); fields.customerEmail=valOf('cust-email')||valOf('srv-email'); fields.reminderAt=valOf('remind-at'); fields.nextAction=valOf('next-action'); fields.paid=valOf('paid-amt')||'0'; fields.balance=txtOf('balance-amt')||'0 €';
-  fields.church=valOf(kind==='Σέρβις'?'srv-church':'church')||valOf('church')||valOf('srv-church'); fields.technician=selText(kind==='Σέρβις'?'srv-tech':'tech')||selText('tech')||selText('srv-tech'); fields.serviceDate=valOf('srv-date');
-  fields.nomos=selText('nomos'); fields.delivery=selText('delivery'); fields.workers=valOf('workers'); fields.days=valOf('days');
-  fields.machine=selText('mach'); fields.machineAmount=txtOf('mach-amt'); fields.rele=selText('rele'); fields.releAmount=txtOf('rele-amt'); fields.sfyri=selText('sfyri'); fields.sfyriQty=valOf('sfqty'); fields.sfyriAmount=txtOf('sfyri-amt');
-  fields.installationCost=valOf('egk'); fields.installationAmount=txtOf('egk-a'); fields.cablesCost=valOf('kal'); fields.cablesAmount=txtOf('kal-a'); fields.ferryCost=valOf('ferry'); fields.ferryAmount=txtOf('ferry-a');
-  fields.oldKg=valOf('old-kg'); fields.oldPricePerKg=valOf('old-pr'); fields.oldAmount=txtOf('old-amt'); fields.travelKm=txtOf('km-v'); fields.travelWages=txtOf('wg-v'); fields.travelFood=txtOf('fd-v'); fields.travelHotel=txtOf('ht-v');
-  fields.bellsTotal=txtOf('t-bell'); fields.machinesTotal=txtOf('t-mach'); fields.travelTotal=txtOf('t-km'); fields.installationMaterialsTotal=txtOf('t-egk'); fields.extraTotal=txtOf('t-extra'); fields.serviceTotalInOffer=txtOf('t-serv'); fields.oldDeduction=txtOf('t-old'); fields.subtotalNoVat=txtOf('t-sub'); fields.vat=txtOf('t-vat'); fields.grossTotal=txtOf('t-gross'); fields.discountPercent=valOf('disc-pct'); fields.discountAmount=valOf('disc-amt')||txtOf('disc-show'); fields.finalTotal=txtOf('t-final')||txtOf('srv-total'); fields.serviceSubtotal=txtOf('srv-sub'); fields.serviceVat=txtOf('srv-vat'); fields.serviceTotal=txtOf('srv-total');
-  fields.bells=[]; document.querySelectorAll('#bell-rows .bell-r').forEach((r,i)=>{ const select=r.querySelector('select'); const kg=r.querySelector('input'); const amt=r.querySelector('.bamt'); fields.bells.push({no:i+1,type:select?(select.options[select.selectedIndex]?.text||select.value):'',kg:kg?kg.value:'',amount:amt?amt.textContent:''}); });
-  fields.serviceItems=[]; for(let i=1;i<=12;i++){ const q=valOf('ss'+i); const a=txtOf('sa'+i); const row=document.querySelector('#ss'+i)?.closest('.srow'); const label=row?.querySelector('.sd')?.childNodes[0]?.textContent?.trim()||('service_'+i); const unit=txtOf('lp'+i); if(q && Number(q)!==0) fields.serviceItems.push({item:label,unit,qty:q,amount:a}); }
-  return fields;
-}
-function flattenFieldsForCSV(fields){ const out=Object.assign({},fields||{}); out.bells=(fields?.bells||[]).map(b=>`${b.no}. ${b.type} ${b.kg}kg ${b.amount}`).join(' | '); out.serviceItems=(fields?.serviceItems||[]).map(x=>`${x.item} x${x.qty} ${x.amount}`).join(' | '); return out; }
-function csvEscape(v){ v=(v==null?'':String(v)); return '"'+v.replace(/"/g,'""')+'"'; }
-function downloadText(filename, text, mime){ const blob=new Blob(['\ufeff'+text],{type:mime||'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
-function getHistory(){ try{return JSON.parse(localStorage.getItem('bells_hist')||'[]');}catch(e){return [];} }
-function exportHistorySummaryCSV(){ const hist=getHistory(); if(!hist.length){alert('Δεν υπάρχει αρχείο για εξαγωγή.');return;} const rows=hist.map(h=>Object.assign({id:h.id||'',date:h.date||'',workId:h.workId||'',kind:h.kind||'',status:normalizeStatus(h.status),church:h.church||'',final:h.final||'',paid:h.paid||'',balance:h.balance||'',email:h.email||'',phone:h.phone||'',reminderAt:h.remindAt||'',nextAction:h.nextAction||''},flattenFieldsForCSV(h.fields||{}),{message:h.msg||''})); const headers=Array.from(rows.reduce((set,r)=>{Object.keys(r).forEach(k=>set.add(k));return set;},new Set())); const csv=[headers.map(csvEscape).join(';')].concat(rows.map(r=>headers.map(h=>csvEscape(r[h])).join(';'))).join('\n'); downloadText('tsitouras_bells_export_summary_'+new Date().toISOString().slice(0,10)+'.csv',csv); }
-function exportHistoryDetailedCSV(){ const hist=getHistory(); if(!hist.length){alert('Δεν υπάρχει αρχείο για εξαγωγή.');return;} const rows=[]; hist.forEach(h=>{ const base={id:h.id||'',date:h.date||'',workId:h.workId||'',kind:h.kind||'',status:normalizeStatus(h.status),church:h.church||''}; const f=h.fields||{}; Object.keys(flattenFieldsForCSV(f)).forEach(k=>rows.push(Object.assign({},base,{section:'field',field:k,value:flattenFieldsForCSV(f)[k]}))); (f.bells||[]).forEach((b,i)=>Object.keys(b).forEach(k=>rows.push(Object.assign({},base,{section:'bell_'+(i+1),field:k,value:b[k]})))); (f.serviceItems||[]).forEach((it,i)=>Object.keys(it).forEach(k=>rows.push(Object.assign({},base,{section:'service_'+(i+1),field:k,value:it[k]})))); rows.push(Object.assign({},base,{section:'message',field:'fullText',value:h.msg||''})); }); const headers=['id','date','workId','kind','status','church','section','field','value']; const csv=[headers.map(csvEscape).join(';')].concat(rows.map(r=>headers.map(h=>csvEscape(r[h])).join(';'))).join('\n'); downloadText('tsitouras_bells_export_detailed_'+new Date().toISOString().slice(0,10)+'.csv',csv); }
-function exportHistoryJSON(){ const hist=getHistory(); if(!hist.length){alert('Δεν υπάρχει αρχείο για backup.');return;} downloadText('tsitouras_bells_backup_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'TSITOURAS BELLS',version:'v18',exportedAt:new Date().toISOString(),records:hist},null,2),'application/json;charset=utf-8;'); }
 function histViber(id){
   const h=getHist(id);if(!h) return;
   window.location.href='viber://forward?text='+encodeURIComponent(h.msg);
@@ -1058,11 +997,6 @@ function histOffice(id){
   const body=encodeURIComponent(h.msg);
   window.location.href=`mailto:${email}?subject=${sub}&body=${body}`;
 }
-function histPrint(id){
-  const h=getHist(id);if(!h) return;
-  openPrintDoc((h.kind==='Σέρβις'?'ΔΕΛΤΙΟ ΣΕΡΒΙΣ':'ΔΕΛΤΙΟ ΠΡΟΣΦΟΡΑΣ')+' — '+(h.church||''), h.msg||'');
-}
-
 function histDel(id){
   if(!confirm('Διαγραφή αυτής της προσφοράς;')) return;
   let hist=[];
@@ -1083,7 +1017,7 @@ function resetAll(){
   if(document.getElementById('paid-amt')) document.getElementById('paid-amt').value='0';
   if(document.getElementById('balance-amt')) document.getElementById('balance-amt').value='0 €';
   if(document.getElementById('office-notes')) document.getElementById('office-notes').value='';
-  if(document.getElementById('work-status')) document.getElementById('work-status').value='Αναμονή';
+  if(document.getElementById('work-status')) document.getElementById('work-status').value='Προσφορά';
   if(document.getElementById('work-id')) document.getElementById('work-id').value='';
   if(document.getElementById('remind-at')) document.getElementById('remind-at').value='';
   if(document.getElementById('cust-phone')) document.getElementById('cust-phone').value='';
