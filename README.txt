@@ -22,3 +22,5 @@ TSITOURAS BELLS PWA APP v16
 1. Περίμενε 1-2 λεπτά για GitHub Pages deploy.
 2. Άνοιξε το site μία φορά online.
 3. Κάνε refresh ή σβήσε/ξαναβάλε το app στην αρχική οθόνη για να καθαρίσει η cache.
+
+V17: Added print/PDF offer sheet button and printable offer/service template. Also added PDF print from history records.

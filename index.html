@@ -127,6 +127,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn-viber{background:#7360f2;color:#fff}
 .btn-mail{background:#2a7d4f;color:#fff}
 .btn-office{background:#8B6914;color:#fff}
+.btn-print{background:#1a2a4a;color:#fff}
 .btn-rem{background:#d4860a;color:#fff}
 .status-pill{display:inline-block;border-radius:14px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:4px}
 .st-prosfora{background:#fff3cd;color:#8B6914}.st-ongoing{background:#e8f0ff;color:#1B3A6B}.st-done{background:#e7f5ec;color:#2a7d4f}.st-cancel{background:#fdecea;color:#c0392b}
@@ -451,6 +452,7 @@ svg path,svg circle,svg polyline,svg rect,svg line{stroke:#8aafd4;fill:none;stro
 </div>
 <div class="field"><label>Email πελάτη</label><input type="email" id="cust-email" placeholder="info@ecclesia..."></div>
 <div class="field"><label>Email γραφείου / backoffice</label><input type="email" id="office-email" value="info@bells.gr" placeholder="office@..."></div>
+<button class="btn btn-print" onclick="printOffer()">Εκτύπωση Δελτίο Προσφοράς / PDF</button>
 <button class="btn btn-office" onclick="sendOffice()">Αποστολή στο Γραφείο</button>
 <button class="btn btn-gold" onclick="saveToHistory()">Αποθήκευση στο αρχείο</button>
 <button class="btn btn-viber" onclick="shareViber()">Αποστολή Viber</button>
@@ -898,6 +900,30 @@ function sendServiceMail(){
   const body=encodeURIComponent(buildMsg('servis'));
   window.location.href=`mailto:${email}?subject=${sub}&body=${body}`;
 }
+function printDocHtml(title,msg){
+  const e=escapeHtml;
+  const lines=(msg||'').split('\n');
+  const fv=(label)=>{const l=lines.find(x=>x.indexOf(label)>=0);return l?l.split(label)[1].trim():'';};
+  const workId=fv('Κωδικος εργασιας:')||'';
+  const church=fv('Ι.Ν.:')||'';
+  const tech=fv('Τεχνικος:')||'';
+  const date=fv('Ημερ/νια:')||new Date().toLocaleDateString('el-GR');
+  const status=fv('Κατασταση:')||'';
+  const final=fv('ΤΕΛΙΚΗ ΤΙΜΗ:')||fv('ΣΥΝΟΛΟ ΜΕ ΦΠΑ:')||'0 €';
+  const bal=fv('Υπολοιπο εργασιας:')||'0 €';
+  return `<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#17233d;margin:0;background:#fff;font-size:12px;line-height:1.45}.head{display:flex;justify-content:space-between;gap:20px;border-bottom:4px solid #B8960C;padding-bottom:12px;margin-bottom:15px}.brand h1{margin:0;color:#1B3A6B;font-size:25px}.brand .sub{font-weight:bold;color:#B8960C}.box{text-align:right;border:1px solid #d8e0f0;border-radius:10px;padding:10px 12px;min-width:220px}.box h2{font-size:17px;margin:0 0 8px;color:#1B3A6B}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}.field{border:1px solid #d8e0f0;border-radius:8px;padding:8px 10px}.lab{font-size:10px;color:#6080a8;text-transform:uppercase;font-weight:bold}.val{font-weight:bold}.total{background:#1B3A6B;color:#fff;border-radius:12px;padding:14px 16px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}.total .v{font-size:25px;font-weight:bold}.bal{color:#B8960C;font-weight:bold;margin-top:5px}.sec{font-size:13px;font-weight:bold;color:#1B3A6B;border-bottom:1px solid #d8e0f0;padding-bottom:5px;margin:15px 0 8px}.details{white-space:pre-wrap;border:1px solid #d8e0f0;background:#f7f9fd;border-radius:10px;padding:12px;font-size:11px}.terms{margin-top:15px;border-top:1px solid #d8e0f0;padding-top:10px;color:#465f88;font-size:11px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:28px}.sig{border-top:1px solid #9fb0c8;padding-top:6px;text-align:center;color:#6080a8}.noprint button{padding:12px 18px;border:0;border-radius:9px;background:#1B3A6B;color:white;font-weight:bold}@media print{.noprint{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="head"><div class="brand"><h1>TSITOURAS BELLS</h1><div class="sub">ΑΦΟΙ ΤΣΙΤΟΥΡΑ Ο.Ε. - bells.gr</div><div>Τηλ. 210-5550 700 - Email: info@bells.gr</div></div><div class="box"><h2>${e(title)}</h2><div><b>${e(workId)}</b></div><div>${e(date)}</div><div>${e(status)}</div></div></div><div class="grid"><div class="field"><div class="lab">Ναός / Πελάτης</div><div class="val">${e(church||'—')}</div></div><div class="field"><div class="lab">Τεχνικός</div><div class="val">${e(tech||'—')}</div></div></div><div class="total"><div><div>Τελικό σύνολο</div><div class="bal">Υπόλοιπο: ${e(bal)}</div></div><div class="v">${e(final)}</div></div><div class="sec">Αναλυτικό δελτίο</div><div class="details">${e(msg||'')}</div><div class="terms">Εγγύηση καμπανών 10 χρόνια - Εγγύηση συστήματος 2 χρόνια - Η προσφορά ισχύει σύμφωνα με τα συμφωνημένα στοιχεία της εργασίας.</div><div class="sign"><div class="sig">Υπογραφή πελάτη</div><div class="sig">ΑΦΟΙ ΤΣΙΤΟΥΡΑ Ο.Ε.</div></div><div class="noprint" style="margin-top:20px"><button onclick="window.print()">Εκτύπωση / Αποθήκευση PDF</button></div><script>setTimeout(function(){window.print();},450);<\/script></body></html>`;
+}
+function openPrintDoc(title,msg){
+  const w=window.open('','_blank');
+  if(!w){alert('Το κινητό μπλόκαρε το παράθυρο εκτύπωσης. Δοκιμάστε από browser ή ενεργοποιήστε pop-ups.');return;}
+  w.document.open();w.document.write(printDocHtml(title,msg));w.document.close();
+}
+function printOffer(){
+  calc();
+  const isSrvOnly=quoteMode==='service';
+  openPrintDoc(isSrvOnly?'ΔΕΛΤΙΟ ΣΕΡΒΙΣ':'ΔΕΛΤΙΟ ΠΡΟΣΦΟΡΑΣ', buildMsg(isSrvOnly?'servis':'prosfora'));
+}
+
 
 // ── Status / reminders ─────────────────────────────────
 function normalizeStatus(st){ if(st==='Εγκρίθηκε') return 'Σε εξέλιξη'; return st||'Προσφορά'; }
@@ -966,6 +992,7 @@ function renderHistory(){
         <button class="hi-btn hi-mail" onclick="histMail(${h.id})">Email</button>
         <button class="hi-btn hi-mail" onclick="histOffice(${h.id})">Γραφείο</button>
         <button class="hi-btn hi-mail" onclick="histCall(${h.id})">Κλήση</button>
+        <button class="hi-btn hi-mail" onclick="histPrint(${h.id})">PDF</button>
       </div>
       <div class="hi-acts">
         <button class="hi-btn hi-mail" onclick="histSetStatus(${h.id},'Σε εξέλιξη')">Εγκρίθηκε → Ongoing</button>
@@ -997,6 +1024,11 @@ function histOffice(id){
   const body=encodeURIComponent(h.msg);
   window.location.href=`mailto:${email}?subject=${sub}&body=${body}`;
 }
+function histPrint(id){
+  const h=getHist(id);if(!h) return;
+  openPrintDoc((h.kind==='Σέρβις'?'ΔΕΛΤΙΟ ΣΕΡΒΙΣ':'ΔΕΛΤΙΟ ΠΡΟΣΦΟΡΑΣ')+' — '+(h.church||''), h.msg||'');
+}
+
 function histDel(id){
   if(!confirm('Διαγραφή αυτής της προσφοράς;')) return;
   let hist=[];

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tsitouras-bells-v16-workflow-1';
+const CACHE_NAME = 'tsitouras-bells-v17-print-pdf';
 const APP_FILES = [
   './',
   './index.html',
